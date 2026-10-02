@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --workspaces --include-workspace-root
+
+      - name: Prepare backend env
+        run: |
+          cp backend/.env.example backend/.env
+          cat > backend/.env.test <<'EOF'
+          DATABASE_URL="file:./test.db"
+          PORT=3002
+          CORS_ORIGIN="http://localhost:5173"
+          EOF
+          cp frontend/.env.example frontend/.env
+
+      - name: Prisma generate
+        run: npx prisma generate
+        working-directory: backend
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build
