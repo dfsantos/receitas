@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite nao suporta enums nativos; os valores validos de `category` sao
+// validados pelo Zod em backend/src/schemas/recipe.schema.ts (CATEGORY_VALUES).
+model Recipe {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  category    String   @default("OUTRO")
+  prepTimeMin Int
+  servings    Int
+  imageUrl    String?
+  ingredients Ingredient[]
+  steps       Step[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Ingredient {
+  id       String @id @default(uuid())
+  name     String
+  quantity String
+  order    Int
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId String
+}
+
+model Step {
+  id          String @id @default(uuid())
+  description String
+  order       Int
+  recipe      Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId    String
+}
